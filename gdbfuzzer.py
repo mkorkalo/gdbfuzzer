@@ -5,17 +5,17 @@ Experimental, use at your own risk.
 https://github.com/mkorkalo/gdbfuzzer
 """
 
-
 import argparse
-from typing import List, Optional, Tuple
-import logging
-import json
+import copy
 import glob
+import hashlib
+import json
+import logging
 import os
 import subprocess
-import hashlib
-import copy
 from io import StringIO
+from typing import List, Optional, Tuple
+
 
 class Status:
     def __init__(self):
@@ -72,6 +72,7 @@ class Status:
             payload_path = Status.payload_path(path)
             with open(payload_path, "wb") as f:
                 f.write(self.payload)
+
 
 class FuzzerException(Exception):
     pass
@@ -154,12 +155,12 @@ class GdbFuzzer:
                 breakpoints.append(b)
                 short_hash = self.breakpoint_hash(b)
                 script += f'b *{b}\n' \
-                       'command\n' \
-                       'silent\n' \
-                       f'print "{short_hash}: 0x{b}"\n' \
-                       'x/x $rdx\n' \
-                       'cont\n' \
-                       'end\n'
+                    'command\n' \
+                    'silent\n' \
+                    f'print "{short_hash}: 0x{b}"\n' \
+                    'x/x $rdx\n' \
+                    'cont\n' \
+                    'end\n'
 
             for b in status.expected_order:
                 expected_order.append(b)
@@ -179,7 +180,7 @@ class GdbFuzzer:
             f.write(fuzzed_payload)
 
         script, order = self.create_gdb_script(tmp_file)
-        #self.log.debug("script: %s", script)
+        # self.log.debug("script: %s", script)
 
         output = subprocess.check_output(["gdb", self.fuzzed_program],
                                          stderr=subprocess.STDOUT,
